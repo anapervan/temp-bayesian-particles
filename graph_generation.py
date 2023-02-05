@@ -2,9 +2,24 @@ import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
 
+paths = -1 # global variable
+def dfs(visited, graph, node):
+    """Basic depth first search algorithm"""
+    global paths
+    if node=='0':
+        paths=paths+1
+    if node not in visited:
+        visited.append(node)
+        if graph[node]==[]:
+            paths=paths+1
+        for neighbor in graph[node]:
+            dfs(visited, graph, neighbor)
+            visited = ['0']
+    return paths
+
 
 def create_graph(N):  # N = number of nodes in a random graph
-    """Create a random Circulative Network """
+    """Create a random Circulative Network"""
 
     # Parameters
     outgoing_threshold = 5  # max number of outgoing edges
@@ -42,6 +57,11 @@ def create_graph(N):  # N = number of nodes in a random graph
     G = nx.from_numpy_array(A, create_using = nx.MultiDiGraph())  # generate graph from adjacency matrix
     E = G.edges  # find edges of generated graph
 
+    # Create dictionary format of graph
+    g={}  
+    for i in range(N):
+        g[str(i)] = [str(j) for j in range(N) if A[i,j]==1]  # save outgoing nodes
+
     # Find entropy of graph
     h=0
     for i in A:
@@ -55,4 +75,4 @@ def create_graph(N):  # N = number of nodes in a random graph
     plt.axis('off')
     plt.show()
 
-    return(G,h,A)
+    return(G,g,h,A)

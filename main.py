@@ -22,10 +22,10 @@ def calculate_parameters(g, M, policy_paths, num_policies, target):
     return q, N
 
 
-def record_results_csv(M, A, N, B, comm, target, q, z_fp, z_fn, target_count):
+def record_results_csv(M, A, N, B, comm, target, q, z_fp, z_fn, target_count, first_trial):
     """Write output to a csv file"""
 
-    filename = "data/" + "rand_" + str(M) + "_nodes_" + str(N) + "_agents_" + str(target) + "_target"  # csv filename with parameters
+    filename = "rand_" + str(M) + "_nodes_" + str(N) + "_agents_" + str(target) + "_target"  # csv filename with parameters
 
     with open(filename+'.csv', 'a', newline='') as csvfile:  # save data
         writer = csv.writer(csvfile, delimiter=' ', quotechar='|', quoting=csv.QUOTE_MINIMAL)
@@ -42,7 +42,7 @@ def record_results_csv(M, A, N, B, comm, target, q, z_fp, z_fn, target_count):
         writer.writerow([])
 
 
-def run_simulation(M, graph_ind, G, g, A, P, B, splits, policy_bits, transitions, node_policies, full_policies, policy_paths, paths, target, q, N, first_trial):
+def run_simulation(M, G, g, A, P, B, splits, policy_bits, transitions, node_policies, full_policies, policy_paths, paths, target, q, N, first_trial):
     # Parameters
     comm = False  # total number of agents
     z_fp = 0.0  # probability of false positive
@@ -52,8 +52,6 @@ def run_simulation(M, graph_ind, G, g, A, P, B, splits, policy_bits, transitions
     z_map =  1./paths  # chance of each path possible paths
     L = 3*12  # number of steps without detecting target before success bit resets
     delta = 2*12  # the amount the success bit "charges"
-
-    filename = "data/" + "rand_" + str(M) + "_nodes_" + str(N) + "_agents_" + str(graph_ind) + "_graph_" + str(target) + "_target"            # csv file name with parameters
 
     target_pol_count = 0
     agent_target_count = [False]*N
@@ -151,7 +149,7 @@ def run_simulation(M, graph_ind, G, g, A, P, B, splits, policy_bits, transitions
     print(f"Converged in {len(target_count)} steps")
 
     # Record results to a csv file
-    record_results_csv(M, A, N, B, comm, target, q, z_fp, z_fn, target_count)
+    record_results_csv(M, A, N, B, comm, target, q, z_fp, z_fn, target_count, first_trial)
 
 
 
@@ -159,11 +157,11 @@ def main():
     """Function to generate a random graph and target location, and simulate agents finding the target"""
 
     # Parameters
-    M = 5  # number of nodes in randomly generated graph
+    M = 15  # number of nodes in randomly generated graph
     num_trials = 3  # number of times to run this simulation
 
     # Generate graph
-    G, entropy, A = graph_gen.create_graph(M)
+    G, g, entropy, A = graph_gen.create_graph(M)
 
     # Generate Policies
     P, B, splits = policy_gen.analyze_graph(G,g)  # analyze graph
@@ -173,7 +171,7 @@ def main():
     full_policies = policy_gen.find_full_policies(node_policies, num_splits)  # find full list of all possible policies
     policy_paths = policy_gen.find_node_paths(full_policies,splits,g,transitions,policy_bits)  # find sequence of nodes that each policy passes through
 
-    graph_gen.reset_paths()
+    # graph_gen.reset_paths()
     paths = graph_gen.dfs([], g, '0')  # determine number of possible paths in graph
     print(f"There are {paths} paths in this graph.")  # number of paths counted
 
@@ -185,7 +183,7 @@ def main():
     q, N = calculate_parameters(g,M,policy_paths,len(full_policies),target)
     first_trial = True
     for _ in range(num_trials):
-        run_simulation(M, graph_ind, G, g, A, P, B, splits, policy_bits, transitions, node_policies, full_policies, policy_paths, paths, target, q, N, first_trial)
+        run_simulation(M, G, g, A, P, B, splits, policy_bits, transitions, node_policies, full_policies, policy_paths, paths, target, q, N, first_trial)
         first_trial = False
 
 

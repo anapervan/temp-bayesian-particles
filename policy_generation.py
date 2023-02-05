@@ -2,7 +2,7 @@ import math
 import itertools
 import numpy as np
 
-def analyze_graph(G,g):
+def analyze_graph(G, g):
     """Find the number of bits required and the diverging nodes in the graph.
 
     Outputs:
