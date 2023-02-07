@@ -164,12 +164,11 @@ def main():
     G, g, entropy, A = graph_gen.create_graph(M)
 
     # Generate Policies
-    P, B, splits = policy_gen.analyze_graph(G,g)  # analyze graph
-    num_splits = len(splits)
-    policy_bits = policy_gen.define_policy_structure(P, B, splits)  # find policy structure
-    transitions, node_policies = policy_gen.assign_policies_to_nodes(P,splits,policy_bits,g)  # assign policies to graph transitions
-    full_policies = policy_gen.find_full_policies(node_policies, num_splits)  # find full list of all possible policies
-    policy_paths = policy_gen.find_node_paths(full_policies,splits,g,transitions,policy_bits)  # find sequence of nodes that each policy passes through
+    split_dict, splits, B = policy_gen.analyze_graph(g)  # analyze graph
+    policy_bits = policy_gen.define_policy_structure(split_dict)  # find policy structure
+    transitions, node_policies = policy_gen.assign_policies_to_nodes(split_dict, policy_bits, g)  # assign policies to graph transitions
+    full_policies = policy_gen.find_full_policies(node_policies, len(splits))  # find full list of all possible policies
+    policy_paths = policy_gen.find_node_paths(full_policies, splits, g, transitions, policy_bits)  # find sequence of nodes that each policy passes through
 
     # graph_gen.reset_paths()
     paths = graph_gen.dfs([], g, '0')  # determine number of possible paths in graph
@@ -183,7 +182,7 @@ def main():
     q, N = calculate_parameters(g,M,policy_paths,len(full_policies),target)
     first_trial = True
     for _ in range(num_trials):
-        run_simulation(M, G, g, A, P, B, splits, policy_bits, transitions, node_policies, full_policies, policy_paths, paths, target, q, N, first_trial)
+        run_simulation(M, G, g, A, split_dict, B, splits, policy_bits, transitions, node_policies, full_policies, policy_paths, paths, target, q, N, first_trial)
         first_trial = False
 
 

@@ -58,7 +58,7 @@ def create_graph(N):  # N = number of nodes in a random graph
     E = G.edges  # find edges of generated graph
 
     # Create dictionary format of graph
-    g={}  
+    g={}
     for i in range(N):
         g[str(i)] = [str(j) for j in range(N) if A[i,j]==1]  # save outgoing nodes
 
@@ -68,11 +68,11 @@ def create_graph(N):  # N = number of nodes in a random graph
         s = np.sum(i)
         h = h+s*np.log(s)
 
-    # Plot graph
-    plt.clf()
-    pos = nx.circular_layout(G)  # another possible layout: nx.random_layout(G)
-    nx.draw_networkx(G, pos,arrows=True,arrowsize=10,node_size=1000)
-    plt.axis('off')
-    plt.show()
+    # # Plot graph
+    # plt.clf()
+    # pos = nx.circular_layout(G)  # another possible layout: nx.random_layout(G)
+    # nx.draw_networkx(G, pos,arrows=True,arrowsize=10,node_size=1000)
+    # plt.axis('off')
+    # plt.show()
 
     return(G,g,h,A)
