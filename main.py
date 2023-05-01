@@ -25,7 +25,7 @@ def calculate_parameters(g, M, policy_paths, num_policies, target):
 def record_results_csv(M, A, N, B, comm, target, q, z_fp, z_fn, target_count, first_trial):
     """Write output to a csv file"""
 
-    filename = "rand_" + str(M) + "_nodes_" + str(N) + "_agents_" + str(target) + "_target"  # csv filename with parameters
+    filename = "20_nodes/comm/graph_1_rand_" + str(M) + "_nodes_" + str(N) + "_agents_" + str(target) + "_target"  # csv filename with parameters
 
     with open(filename+'.csv', 'a', newline='') as csvfile:  # save data
         writer = csv.writer(csvfile, delimiter=' ', quotechar='|', quoting=csv.QUOTE_MINIMAL)
@@ -44,12 +44,10 @@ def record_results_csv(M, A, N, B, comm, target, q, z_fp, z_fn, target_count, fi
 
 def run_simulation(M, G, g, A, P, B, splits, policy_bits, transitions, node_policies, full_policies, policy_paths, paths, target, q, N, first_trial):
     # Parameters
-    comm = False  # total number of agents
+    comm = True  # agent communication (true = bayesian particle algorithm. false = independent agents searching)
     z_fp = 0.0  # probability of false positive
     z_fn = 0.0  # probability of false negative
     z_bh = 0.000  # probability of falling into black hole/getting lost
-    z_rb = 0.000  # probability of random bit change
-    z_map =  1./paths  # chance of each path possible paths
     L = 3*12  # number of steps without detecting target before success bit resets
     delta = 2*12  # the amount the success bit "charges"
 
@@ -75,7 +73,7 @@ def run_simulation(M, G, g, A, P, B, splits, policy_bits, transitions, node_poli
         count_dict_hist[c] = []
 
     # Simulate Bayesian Particles
-    while target_pol_count < 0.95*N:
+    while target_pol_count < 0.98*N:
 
         old_nodes = current_nodes.copy()
 
@@ -157,11 +155,13 @@ def main():
     """Function to generate a random graph and target location, and simulate agents finding the target"""
 
     # Parameters
-    M = 15  # number of nodes in randomly generated graph
-    num_trials = 3  # number of times to run this simulation
+    M = 20  # number of nodes in randomly generated graph
+    num_trials = 100  # number of times to run this simulation
+    num_targets = 5
 
     # Generate graph
-    G, g, entropy, A = graph_gen.create_graph(M)
+    G, g, entropy, A, paths, max_cycle_length = graph_gen.create_graph(M)
+    print(f"There are {paths} paths in this graph. \nThe maximum cycle length is {max_cycle_length}.")  # number of paths counted
 
     # Generate Policies
     split_dict, splits, B = policy_gen.analyze_graph(g)  # analyze graph
@@ -170,20 +170,31 @@ def main():
     full_policies = policy_gen.find_full_policies(node_policies, len(splits))  # find full list of all possible policies
     policy_paths = policy_gen.find_node_paths(full_policies, splits, g, transitions, policy_bits)  # find sequence of nodes that each policy passes through
 
-    # graph_gen.reset_paths()
-    paths = graph_gen.dfs([], g, '0')  # determine number of possible paths in graph
-    print(f"There are {paths} paths in this graph.")  # number of paths counted
 
-    # Randomly place the target at a (non-heart) node in the graph
-    target = str(np.random.choice(np.arange(1,M-1)))
-    print(f"\nTarget at {target}")
+    # # Randomly place the target at a (non-heart) node in the graph
+    # target = str(np.random.choice(np.arange(1,M-1)))
+    # print(f"\nTarget at {target}")
 
     # Run simulation
-    q, N = calculate_parameters(g,M,policy_paths,len(full_policies),target)
-    first_trial = True
-    for _ in range(num_trials):
-        run_simulation(M, G, g, A, split_dict, B, splits, policy_bits, transitions, node_policies, full_policies, policy_paths, paths, target, q, N, first_trial)
-        first_trial = False
+    # q, N = calculate_parameters(g,M,policy_paths,len(full_policies),target)
+    # first_trial = True
+    # for _ in range(num_trials):
+    #     run_simulation(M, G, g, A, split_dict, B, splits, policy_bits, transitions, node_policies, full_policies, policy_paths, paths, target, q, N, first_trial)
+    #     first_trial = False
+
+
+    target_list = []
+    for ttt in range(num_targets):
+        target = str(np.random.choice(np.arange(1,M-1)))
+        while target in target_list:
+            target = str(np.random.choice(np.arange(1,M-1)))
+        target_list.append(target)
+        print(f"target_list {target_list}")
+        q, N = calculate_parameters(g, M, policy_paths, len(full_policies), target)
+        first_trial = True
+        for _ in range(num_trials):
+            run_simulation(M, G, g, A, split_dict, B, splits, policy_bits, transitions, node_policies, full_policies, policy_paths, paths, target, q, N, first_trial)
+            first_trial = False
 
 
 if __name__ == "__main__":
