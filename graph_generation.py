@@ -18,8 +18,6 @@ def dfs(visited, graph, node):
             dfs(visited, graph, neighbor)
             max_length = max(max_length, len(visited))
             visited = ['0']
-    print(f"paths {paths}")
-    print(f"max_length {max_length}")
     return paths, max_length
 
 
@@ -28,7 +26,7 @@ def create_graph(N):  # N = number of nodes in a random graph
 
     # Parameters
     outgoing_threshold = 5  # max number of outgoing edges
-    c = 1  # constant for ensuring max cycle length <= c * log(N)
+    c = 3  # constant for ensuring max cycle length <= c * log(N)
     max_cycle_length = float('inf')  # initialize variable for while loop
     g = {}  # initialize graph dictionary
 

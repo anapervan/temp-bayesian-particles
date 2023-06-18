@@ -1,16 +1,19 @@
+import os
 import csv
+import click
 import numpy as np
 import networkx as nx
+from datetime import datetime
 import matplotlib.pyplot as plt
 
 import utils as utils
 import graph_generation as graph_gen
 import policy_generation as policy_gen
+from plot_output_data import plot_output_data
 
 
 def calculate_parameters(g, M, policy_paths, num_policies, target):
     """Calculate q (the probability of passing by the target) and N (the number of agents required)"""
-
     target_policies = utils.find_target_policies(policy_paths,[target])  # find which policies will bypass the target (not used in simulation, just to print)
     q = utils.chance_of_target(g, policy_paths, target)  # probability of passing by the target
     print(f"Chance of finding the target: {q}")
@@ -22,12 +25,11 @@ def calculate_parameters(g, M, policy_paths, num_policies, target):
     return q, N
 
 
-def record_results_csv(M, A, N, B, comm, target, q, z_fp, z_fn, target_count, first_trial):
+def record_results_csv(M, A, N, B, comm, target, q, z_fp, z_fn, target_count, first_trial, output_path):
     """Write output to a csv file"""
+    file_name = output_path + "/" + str(M) + "_nodes_" + str(N) + "_agents_" + str(target) + "_target"  # csv filename with parameters
 
-    filename = "20_nodes/comm/graph_1_rand_" + str(M) + "_nodes_" + str(N) + "_agents_" + str(target) + "_target"  # csv filename with parameters
-
-    with open(filename+'.csv', 'a', newline='') as csvfile:  # save data
+    with open(file_name+'.csv', 'a', newline='') as csvfile:  # save data
         writer = csv.writer(csvfile, delimiter=' ', quotechar='|', quoting=csv.QUOTE_MINIMAL)
         if first_trial==True:
             writer.writerow([str(A),  "graph"])
@@ -42,7 +44,7 @@ def record_results_csv(M, A, N, B, comm, target, q, z_fp, z_fn, target_count, fi
         writer.writerow([])
 
 
-def run_simulation(M, G, g, A, P, B, splits, policy_bits, transitions, node_policies, full_policies, policy_paths, paths, target, q, N, first_trial):
+def run_simulation(M, G, g, A, P, B, splits, policy_bits, transitions, node_policies, full_policies, policy_paths, paths, target, q, N, first_trial, output_path):
     # Parameters
     comm = True  # agent communication (true = bayesian particle algorithm. false = independent agents searching)
     z_fp = 0.0  # probability of false positive
@@ -147,21 +149,27 @@ def run_simulation(M, G, g, A, P, B, splits, policy_bits, transitions, node_poli
     print(f"Converged in {len(target_count)} steps")
 
     # Record results to a csv file
-    record_results_csv(M, A, N, B, comm, target, q, z_fp, z_fn, target_count, first_trial)
+    record_results_csv(M, A, N, B, comm, target, q, z_fp, z_fn, target_count, first_trial, output_path)
 
 
-
-def main():
+@click.command()
+@click.option('--num_nodes', default=10, help='The number of nodes in the randomly generated graph')
+@click.option('--num_targets', default=1, help='The number of targets. Must be less than n-1 (n = number of nodes).')
+@click.option('--num_trials', default=10, help='The number of simulations to run for each target.')
+@click.option('--no_output_plot', type=bool, default=False, help='Boolean flag for whether or not to plot output data. Add this to NOT plot the data.')
+def main(num_nodes, num_targets, num_trials, no_output_plot):
     """Function to generate a random graph and target location, and simulate agents finding the target"""
 
-    # Parameters
-    M = 20  # number of nodes in randomly generated graph
-    num_trials = 100  # number of times to run this simulation
-    num_targets = 5
+    # Create a folder to save the output data to
+    current_datetime = datetime.now()
+    datetime_str = current_datetime.strftime("%Y-%m-%d--%H-%M-%S")
+    output_path = os.path.join(os.getcwd(), f"output--{datetime_str}")
+    if not os.path.exists(output_path):
+        os.mkdir(output_path)
 
     # Generate graph
-    G, g, entropy, A, paths, max_cycle_length = graph_gen.create_graph(M)
-    print(f"There are {paths} paths in this graph. \nThe maximum cycle length is {max_cycle_length}.")  # number of paths counted
+    G, g, entropy, A, paths, max_cycle_length = graph_gen.create_graph(num_nodes)
+    print(f"\nThere are {paths} paths in this graph. \nThe maximum cycle length is {max_cycle_length}.")  # number of paths counted
 
     # Generate Policies
     split_dict, splits, B = policy_gen.analyze_graph(g)  # analyze graph
@@ -170,31 +178,25 @@ def main():
     full_policies = policy_gen.find_full_policies(node_policies, len(splits))  # find full list of all possible policies
     policy_paths = policy_gen.find_node_paths(full_policies, splits, g, transitions, policy_bits)  # find sequence of nodes that each policy passes through
 
-
-    # # Randomly place the target at a (non-heart) node in the graph
-    # target = str(np.random.choice(np.arange(1,M-1)))
-    # print(f"\nTarget at {target}")
-
-    # Run simulation
-    # q, N = calculate_parameters(g,M,policy_paths,len(full_policies),target)
-    # first_trial = True
-    # for _ in range(num_trials):
-    #     run_simulation(M, G, g, A, split_dict, B, splits, policy_bits, transitions, node_policies, full_policies, policy_paths, paths, target, q, N, first_trial)
-    #     first_trial = False
-
-
+    # Randomly place the target at a (non-heart) node in the graph
     target_list = []
     for ttt in range(num_targets):
-        target = str(np.random.choice(np.arange(1,M-1)))
+        target = str(np.random.choice(np.arange(1, num_nodes-1)))
         while target in target_list:
-            target = str(np.random.choice(np.arange(1,M-1)))
+            target = str(np.random.choice(np.arange(1, num_nodes-1)))
         target_list.append(target)
-        print(f"target_list {target_list}")
-        q, N = calculate_parameters(g, M, policy_paths, len(full_policies), target)
+        print(f"\nTarget at {target}")
+
+        # Run simulation
+        q, N = calculate_parameters(g, num_nodes, policy_paths, len(full_policies), target)
         first_trial = True
         for _ in range(num_trials):
-            run_simulation(M, G, g, A, split_dict, B, splits, policy_bits, transitions, node_policies, full_policies, policy_paths, paths, target, q, N, first_trial)
+            run_simulation(num_nodes, G, g, A, split_dict, B, splits, policy_bits, transitions, node_policies, full_policies, policy_paths, paths, target, q, N, first_trial, output_path)
             first_trial = False
+
+    # Optionally plot output data
+    if not no_output_plot:
+        plot_output_data(output_path)
 
 
 if __name__ == "__main__":
