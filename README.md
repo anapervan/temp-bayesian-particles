@@ -1,5 +1,20 @@
 # Bayesian Particles
 
+<p align="center">
+  <img alt="A, An illustration of the human circulatory system, inset with
+  an illustration of a microscopic robot. B, A graph representing
+  a simplified human circulatory system, with an agent (Bayesian
+  particle) containing a policy bit P and a success bit S. C,
+  The experimental set up of the circulatory maze and one of the
+  Bayesian robots." src="bayesian_particles.png" width="97%">
+  </p>
+
+<p align="center">
+  <img alt="A graph with 10 nodes and the target locations colored." src="output_example/graph.png" width="45%">
+&nbsp; &nbsp; &nbsp; &nbsp;
+  <img alt="A plot of the portion of successful agents for each timestep throughout the simulation" src="output_example/simulation_results.png" width="48%">
+</p>
+
 ### Installing and Running
 To randomly generate a circulative network and simulate Bayesian particles searching for a target: clone the repository, move into the new directory, and run a simulation.
 ```
@@ -29,8 +44,4 @@ python3 plot_output_data.py --output_path=output_example
 ```
 
 ### Plots
-The output plots from this data are also saved in `output_example`. The randomly generated graph, with color-coded target nodes is saved for each simulation. And a plot of the portion of successful agents over time is saved as well. This includes data from each simulation for each target, and the averages of the agents performance for each target.
-
-![A graph with 10 nodes and the target locations colored.](output_example/graph.png)
-
-![A plot of the portion of successful agents for each timestep throughout the simulation](output_example/simulation_results.png)
+The output plots from this data are shown above, and also saved in `output_example`. The randomly generated graph, with color-coded target nodes is saved for each simulation. And a plot of the portion of successful agents over time is saved as well. This includes data from each simulation for each target, and the averages of the agents performance for each target.
